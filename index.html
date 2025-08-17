@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>化学元素消消乐</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #fef9e7, #faf3e0);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #5d4037;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 253, 245, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(210, 180, 140, 0.3);
+            overflow: hidden;
+            padding: 25px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #8d6e63;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header p {
+            color: #a1887f;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8d6e63;
+            font-size: 18px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #d7ccc8;
+            border-radius: 15px;
+            font-size: 18px;
+            background: #fff8e1;
+            color: #5d4037;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #a1887f;
+            box-shadow: 0 0 0 4px rgba(161, 136, 127, 0.2);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #bcaaa4, #8d6e63);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(141, 110, 99, 0.3);
+            margin-top: 15px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(141, 110, 99, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .bubbles-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin: 30px 0;
+        }
+        
+        .bubble {
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 
+                0 10px 20px rgba(0,0,0,0.1),
+                inset 0 -8px 15px rgba(0,0,0,0.2),
+                inset 0 8px 15px rgba(255,255,255,0.7);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateZ(0);
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        .bubble:hover {
+            transform: scale(1.05);
+        }
+        
+        .bubble.selected {
+            transform: scale(1.15);
+            z-index: 100;
+            box-shadow: 
+                0 0 30px rgba(255, 255, 255, 0.8),
+                0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .bubble.matched {
+            animation: pop 0.6s forwards;
+            pointer-events: none;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding: 18px;
+            background: #efebe9;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #5d4037;
+        }
+        
+        .success-screen {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .success-icon {
+            font-size: 100px;
+            color: #ff9800;
+            margin: 20px 0;
+            animation: bounce 1.5s infinite;
+        }
+        
+        .success-message {
+            font-size: 36px;
+            color: #8d6e63;
+            margin: 20px 0;
+            font-weight: 700;
+        }
+        
+        .player-info {
+            background: #efebe9;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 30px 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .floating-bubbles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .floating-bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%);
+            box-shadow: inset 0 -5px 15px rgba(255,255,255,0.5);
+            animation: float 10s infinite linear;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-10px) translateX(5px); }
+            50% { transform: translateY(-5px) translateX(-5px); }
+            75% { transform: translateY(-10px) translateX(-3px); }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @media (max-width: 500px) {
+            .bubbles-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .bubble {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-bubbles" id="floating-bubbles"></div>
+    
+    <div class="container">
+        <!-- 输入信息界面 -->
+        <div id="info-screen" class="screen active">
+            <div class="header">
+                <h1>化学元素消消乐</h1>
+                <p>匹配元素名称与符号 - 前20号元素</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="class"><i class="fas fa-school"></i> 班级</label>
+                <input type="text" id="class" placeholder="请输入班级">
+            </div>
+            
+            <div class="form-group">
+                <label for="name"><i class="fas fa-user"></i> 姓名</label>
+                <input type="text" id="name" placeholder="请输入姓名">
+            </div>
+            
+            <div class="form-group">
+                <label for="date"><i class="fas fa-calendar"></i> 日期</label>
+                <input type="date" id="date">
+            </div>
+            
+            <button id="start-btn" class="btn">开始游戏 <i class="fas fa-play"></i></button>
+        </div>
+        
+        <!-- 游戏界面 -->
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <h1>化学元素消消乐</h1>
+                <p>点击匹配元素名称与符号</p>
+            </div>
+            
+            <div class="bubbles-container" id="bubbles-container">
+                <!-- 泡泡将通过JS动态生成 -->
+            </div>
+            
+            <div class="game-info">
+                <div id="player-name">玩家: </div>
+                <div id="attempts">尝试次数: 0</div>
+            </div>
+        </div>
+        
+        <!-- 通关界面 -->
+        <div id="success-screen" class="screen">
+            <div class="success-screen">
+                <div class="success-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="success-message">恭喜你挑战成功！</div>
+                
+                <div class="player-info">
+                    <div id="result-name"></div>
+                    <div id="result-date"></div>
+                </div>
+                
+                <button id="restart-btn" class="btn"><i class="fas fa-redo"></i> 再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 前20号元素数据
+        const elements = [
+            { number: 1, name: "氢", symbol: "H" },
+            { number: 2, name: "氦", symbol: "He" },
+            { number: 3, name: "锂", symbol: "Li" },
+            { number: 4, name: "铍", symbol: "Be" },
+            { number: 5, name: "硼", symbol: "B" },
+            { number: 6, name: "碳", symbol: "C" },
+            { number: 7, name: "氮", symbol: "N" },
+            { number: 8, name: "氧", symbol: "O" },
+            { number: 9, name: "氟", symbol: "F" },
+            { number: 10, name: "氖", symbol: "Ne" },
+            { number: 11, name: "钠", symbol: "Na" },
+            { number: 12, name: "镁", symbol: "Mg" },
+            { number: 13, name: "铝", symbol: "Al" },
+            { number: 14, name: "硅", symbol: "Si" },
+            { number: 15, name: "磷", symbol: "P" },
+            { number: 16, name: "硫", symbol: "S" },
+            { number: 17, name: "氯", symbol: "Cl" },
+            { number: 18, name: "氩", symbol: "Ar" },
+            { number: 19, name: "钾", symbol: "K" },
+            { number: 20, name: "钙", symbol: "Ca" }
+        ];
+        
+        // 泡泡颜色
+        const bubbleColors = [
+            "#FF6B6B", "#4ECDC4", "#45B7D1", "#FF9F1C", "#2EC4B6",
+            "#E71D36", "#FF9F1C", "#2EC4B6", "#E71D36", "#FF6B6B",
+            "#4ECDC4", "#45B7D1", "#FF9F1C", "#2EC4B6", "#E71D36",
+            "#FF6B6B", "#4ECDC4", "#45B7D1", "#FF9F1C", "#2EC4B6"
+        ];
+        
+        // DOM 元素
+        const infoScreen = document.getElementById('info-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const successScreen = document.getElementById('success-screen');
+        const bubblesContainer = document.getElementById('bubbles-container');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const playerNameDisplay = document.getElementById('player-name');
+        const resultNameDisplay = document.getElementById('result-name');
+        const resultDateDisplay = document.getElementById('result-date');
+        const attemptsDisplay = document.getElementById('attempts');
+        const floatingBubbles = document.getElementById('floating-bubbles');
+        
+        // 游戏变量
+        let bubbles = [];
+        let selectedBubble = null;
+        let matchedPairs = 0;
+        let attempts = 0;
+        let playerName = '';
+        let playerClass = '';
+        let playerDate = '';
+        
+        // 声音效果
+        const sounds = {
+            success: new Audio("data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"),
+            error: new Audio("data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"),
+            win: new Audio("data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV")
+        };
+        
+        // 创建浮动背景泡泡
+        function createFloatingBubbles() {
+            floatingBubbles.innerHTML = '';
+            
+            for (let i = 0; i < 15; i++) {
+                const size = Math.random() * 100 + 50;
+                const bubble = document.createElement('div');
+                bubble.className = 'floating-bubble';
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.top = `${Math.random() * 100}%`;
+                bubble.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                bubble.style.animationDelay = `${Math.random() * 5}s`;
+                bubble.style.opacity = Math.random() * 0.3 + 0.1;
+                floatingBubbles.appendChild(bubble);
+            }
+        }
+        
+        // 初始化游戏
+        function initGame() {
+            // 获取玩家信息
+            playerClass = document.getElementById('class').value;
+            playerName = document.getElementById('name').value;
+            playerDate = document.getElementById('date').value || new Date().toISOString().split('T')[0];
+            
+            // 验证输入
+            if (!playerClass || !playerName || !playerDate) {
+                alert('请填写所有信息');
+                return;
+            }
+            
+            // 更新玩家信息显示
+            playerNameDisplay.textContent = `玩家: ${playerName}`;
+            attemptsDisplay.textContent = `尝试次数: 0`;
+            
+            // 切换屏幕
+            infoScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            
+            // 重置游戏变量
+            bubbles = [];
+            selectedBubble = null;
+            matchedPairs = 0;
+            attempts = 0;
+            
+            // 创建泡泡数据
+            elements.forEach((element, index) => {
+                bubbles.push({
+                    id: element.number,
+                    type: 'name',
+                    content: element.name,
+                    color: bubbleColors[index],
+                    matched: false
+                });
+                
+                bubbles.push({
+                    id: element.number,
+                    type: 'symbol',
+                    content: element.symbol,
+                    color: bubbleColors[index],
+                    matched: false
+                });
+            });
+            
+            // 洗牌
+            shuffleBubbles();
+            
+            // 渲染泡泡
+            renderBubbles();
+        }
+        
+        // 洗牌函数
+        function shuffleBubbles() {
+            for (let i = bubbles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [bubbles[i], bubbles[j]] = [bubbles[j], bubbles[i]];
+            }
+        }
+        
+        // 渲染泡泡到游戏界面
+        function renderBubbles() {
+            bubblesContainer.innerHTML = '';
+            
+            bubbles.forEach((bubble, index) => {
+                if (bubble.matched) return;
+                
+                const bubbleElement = document.createElement('div');
+                bubbleElement.className = 'bubble';
+                bubbleElement.textContent = bubble.content;
+                bubbleElement.style.background = `radial-gradient(circle at 30% 30%, ${lightenColor(bubble.color, 30)}, ${bubble.color})`;
+                bubbleElement.style.animationDelay = `${index * 0.05}s`;
+                bubbleElement.dataset.index = index;
+                
+                bubbleElement.addEventListener('click', () => selectBubble(bubbleElement, index));
+                
+                bubblesContainer.appendChild(bubbleElement);
+            });
+        }
+        
+        // 泡泡选择事件
+        function selectBubble(bubbleElement, index) {
+            const bubble = bubbles[index];
+            
+            // 如果泡泡已经匹配，则忽略点击
+            if (bubble.matched) return;
+            
+            // 如果当前没有选中的泡泡
+            if (!selectedBubble) {
+                // 选中当前泡泡
+                bubbleElement.classList.add('selected');
+                selectedBubble = { element: bubbleElement, index, bubble };
+                return;
+            }
+            
+            // 如果点击的是同一个泡泡
+            if (selectedBubble.index === index) {
+                bubbleElement.classList.remove('selected');
+                selectedBubble = null;
+                return;
+            }
+            
+            // 点击第二个泡泡
+            attempts++;
+            attemptsDisplay.textContent = `尝试次数: ${attempts}`;
+            
+            const firstBubble = selectedBubble.bubble;
+            const secondBubble = bubble;
+            
+            // 检查是否匹配
+            if (firstBubble.id === secondBubble.id && firstBubble.type !== secondBubble.type) {
+                // 匹配成功
+                sounds.success.play();
+                
+                // 标记为已匹配
+                bubbles[selectedBubble.index].matched = true;
+                bubbles[index].matched = true;
+                matchedPairs++;
+                
+                // 添加匹配动画
+                bubbleElement.classList.add('selected', 'matched');
+                selectedBubble.element.classList.add('matched');
+                
+                // 延迟后移除泡泡
+                setTimeout(() => {
+                    selectedBubble.element.style.visibility = 'hidden';
+                    bubbleElement.style.visibility = 'hidden';
+                    selectedBubble = null;
+                    
+                    // 检查游戏是否结束
+                    if (matchedPairs === elements.length) {
+                        setTimeout(showSuccessScreen, 800);
+                    }
+                }, 600);
+            } else {
+                // 匹配失败
+                sounds.error.play();
+                bubbleElement.classList.add('selected');
+                
+                // 延迟后取消选中
+                setTimeout(() => {
+                    selectedBubble.element.classList.remove('selected');
+                    bubbleElement.classList.remove('selected');
+                    selectedBubble = null;
+                }, 1000);
+            }
+        }
+        
+        // 颜色变亮函数
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace("#", ""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            
+            return "#" + (
+                0x1000000 +
+                (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+                (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+                (B < 255 ? (B < 1 ? 0 : B) : 255)
+            ).toString(16).slice(1);
+        }
+        
+        // 显示通关界面
+        function showSuccessScreen() {
+            gameScreen.classList.remove('active');
+            successScreen.classList.add('active');
+            
+            sounds.win.play();
+            
+            // 更新玩家信息
+            resultNameDisplay.textContent = `姓名: ${playerName}`;
+            resultDateDisplay.textContent = `日期: ${playerDate}`;
+        }
+        
+        // 事件监听
+        startBtn.addEventListener('click', initGame);
+        
+        restartBtn.addEventListener('click', () => {
+            successScreen.classList.remove('active');
+            infoScreen.classList.add('active');
+            
+            // 重置表单
+            document.getElementById('class').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('date').value = '';
+        });
+        
+        // 设置默认日期为今天
+        document.getElementById('date').valueAsDate = new Date();
+        
+        // 创建浮动泡泡背景
+        createFloatingBubbles();
+        
+        // 为声音效果添加基本数据
+        sounds.success.volume = 0.5;
+        sounds.error.volume = 0.5;
+        sounds.win.volume = 0.6;
+    </script>
+</body>
+</html>
